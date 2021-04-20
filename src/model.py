@@ -16,6 +16,14 @@ from mesa.time import RandomActivation
 
 from .boid import Boid
 
+# weights for cohere, avoid, align, random and max_accel
+# are all set to 0.3 (this is what they are set to in the paper)
+# alpha of 0.75 is used for the avoid rule
+# w=0.8, v_max = 1.55, vision=30 d_min=15
+# All scouts fly at velocity v_max (this maybe can be adjusted
+# to allow for a different stopping condition, because the math
+# behind the original model works by having the scouts leave the
+# swarm when it's time to stop, but I think they don't do this).
 
 class BoidFlockers(Model):
     """
@@ -28,11 +36,11 @@ class BoidFlockers(Model):
         width=100,
         height=100,
         speed=1,
-        vision=10,
-        separation=2,
-        cohere=0.025,
-        separate=0.25,
-        match=0.04,
+        vision=30,
+        separation=15,
+        cohere=0.3,
+        separate=0.3,
+        match=0.3
     ):
         """
         Create a new Flockers model.

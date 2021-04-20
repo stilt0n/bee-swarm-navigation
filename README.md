@@ -7,9 +7,7 @@ The swarm model will be based on the model from the paper [*Honeybee swarms: how
   
 We are using the [mesa](https://github.com/projectmesa/mesa) Python library for multi-agent simulation for this project.
   
-Since one of the core parts of the model is essentially just the ["boids" model](https://team.inria.fr/imagine/files/2014/10/flocks-hers-and-schools.pdf). we are using the mesa [example implementation of boids](https://github.com/projectmesa/mesa/tree/main/examples/boid_flockers) as a starting point.
-  
-At initialization, the repository will just be that model copied, but the model should be extended, first to match the model in the Janson, Middendof and Beekman paper, and then to add extensions of our own.  When the repository is no longer a copy of the mesa example, I will remove this paragraph from the readme.
+Since one of the core parts of the model is essentially just the ["boids" model](https://team.inria.fr/imagine/files/2014/10/flocks-hers-and-schools.pdf). we are using the mesa [example implementation of boids](https://github.com/projectmesa/mesa/tree/main/examples/boid_flockers) as a starting point.  The behavior of the agents is our implementation (in progress) of the Janson et al. paper cited above.  The visualization is what came with the example and probably will continue to remain very similar in the future to avoid reinventing the wheel. (scouts will need a different color though).
   
 ## Setup
 There's a good chance that if you're reading this you know more about dependency management with Python than I do.  But I will do my best to explain my own setup and update this section as I get better with this.
@@ -68,5 +66,9 @@ pip install mesa
   
 This process can be made simpler in the future with requirements files, but I'm not exactly sure how they work when using anaconda and pip together.
 
-## Issues
-At the moment, I can't get the all the graphics to display properly on the simulation so that will need to be fixed.  This can probably be fixed when we modify the model.  I imagine other issues will come up as well.
+## Setup with pip
+
+This actually seems like an easier option.  Clone the repo and create a virtual environment for it.  Then activate the virtual environment.  Inside of the virtual environment, you should just need to `pip install` `numpy`, `matplotlib`, and `mesa`.
+
+## Issues / Further work
+Right now only uninformed bees are implemented.  Scouts will still need to be added.  We will also need to add a goal location in order to see if the simulated bees are able to slow down when they reach their new home.
