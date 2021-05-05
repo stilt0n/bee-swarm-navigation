@@ -9,9 +9,10 @@ from mesa import Agent
 MAX_ACCEL = 0.3
 VMAX = 1.55
 ALPHA = 0.75
-WEIGHT_RANDOM = 0.3
+WEIGHT_RANDOM = 0.3 # paper turned this off in experiments
+INERTIA = 0.66 # paper mentions this but I can't find anywhere where they
+# explicitly say what it was set to.
 
-# TODO: Add is_scout boolean attribute and implement scout behavior.  It will largely be simpler
 class Boid(Agent):
     """
     A Boid-style flocker agent.
@@ -89,18 +90,18 @@ class Boid(Agent):
         Return a vector away from any neighbors closer than separation dist.
         """
         me = self.pos
-        them = (n.pos for n in neighbors if self.model.space.get_distance(me, n.pos) < self.separation)
+        them = [n.pos for n in neighbors if self.model.space.get_distance(me, n.pos) < self.separation]
         separation_vector = np.zeros(2)
-        # The way this functions in the paper is pretty different from
-        # the original example's implementation
-        for other in them:
-            # get_heading(a,b) always subtracts a - b.  In the paper they
-            # do a sum and basically flip this (i.e. get_heading(b,a)).
-            delta = self.model.space.get_heading(other, me)
-            separation_vector += delta * (self.separation / delta - 1)
-        separation_vector /= len(list(them))
-        separation_vector /= self.separation
-        separation_vector = separation_vector / np.linalg.norm(separation_vector) ** ALPHA
+        
+        if len(them) > 0:
+            for other in them:
+                # get_heading(a,b) always subtracts a - b.  In the paper they
+                # do a sum and basically flip this (i.e. get_heading(b,a)).
+                delta = self.model.space.get_heading(other, me)
+                separation_vector += delta * (self.separation / np.linalg.norm(delta) - 1)
+            separation_vector /= len(them)
+            separation_vector /= self.separation
+            separation_vector = separation_vector / np.linalg.norm(separation_vector) ** ALPHA
         return separation_vector
 
     def random(self):
@@ -134,16 +135,17 @@ class Boid(Agent):
         """
         Get the Boid's neighbors, compute the new vector, and move accordingly.
         """
-
+        # The paper does not do the align behavior for the first few steps
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
         v_new = (
             self.cohere(neighbors) * self.cohere_factor
             + self.separate(neighbors) * self.separate_factor
-            + self.match_heading(neighbors) * self.match_factor
+            + (self.match_heading(neighbors) * self.match_factor if self.model.schedule.steps > 4 else 0)
             + self.random() * WEIGHT_RANDOM
         )
-
-        self.velocity /= np.linalg.norm(self.velocity)
+        if np.linalg.norm(v_new) > MAX_ACCEL:
+            v_new = MAX_ACCEL * v_new / np.linalg.norm(v_new)
+        self.velocity = self.velocity * INERTIA + v_new
         # speed will always be 1 here, which is the default value
         # it may be more clear if it's just removed in the future
         new_pos = self.pos + self.velocity * self.speed
