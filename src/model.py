@@ -17,6 +17,14 @@ from mesa.time import RandomActivation
 from .boid import Boid
 from .scout import Scout
 
+# This is bad practice and should be parameters but it'll have to do
+GOAL_X = 900 # in paper this will go out to 4000, but I'm doing some smaller runs first
+GOAL_Y = 150 # in paper I think this is 200 -- This will probably eventually be some fraction of n/2 (maybe n/4?)
+SCOUT_START_X = 75 # scout start area is from (0, SCOUT_START_X) scouts will be evenly spaced + noise
+U_START_CENTER = np.array([150,150]) # in paper this is [200,200,200] and uninformed bees are placed in a cube with side lengths n/3
+# n/3 is to prevent bees from starting starting disconnected.  I will do n/2 here instead.  I think n/3 has a lot to do with the
+# dimension choice here.
+
 # weights for cohere, avoid, align, random and max_accel
 # are all set to 0.3 (this is what they are set to in the paper)
 # alpha of 0.75 is used for the avoid rule
@@ -36,7 +44,7 @@ class BoidFlockers(Model):
         population=100,
         scout_population=10,
         width=1000,
-        height=300,
+        height=400,
         speed=3,
         vision=30,
         separation=15,
@@ -57,7 +65,8 @@ class BoidFlockers(Model):
             separation: What's the minimum distance each Boid will attempt to
                     keep from any other
             cohere, separate, match: factors for the relative importance of
-                    the three drives."""
+                    the three drives.
+        """
         self.population = population
         self.scout_population=scout_population
         self.goal = goal
@@ -76,18 +85,27 @@ class BoidFlockers(Model):
         """
         Create self.population agents, with random positions and starting headings.
         """
-        for i in range(self.population):
-            # Bees in model start with no velocity
-            # Modify this to constrain where the regular bees can start
-            # They will start centered around (150,150)
-            n = self.population
-            x = 50 + self.random.random() * 200
-            y = 50 + self.random.random() * 200
+        scout_interval = SCOUT_START_X / self.scout_population
+        # don't want to calculate this in a loop
+        # scouts seem to be spaced in intervals along one axis in the paper rather
+        # than completely randomly.  It could be they are random and then released
+        # one at a time also, but I haven't been able to find anywhere that this is
+        # mentioned.
+        scout_intervals = np.array([scout_interval * i for i in range(self.scout_population)])
+        # add noise to intervals
+        scout_intervals += np.random.rand(self.scout_population) * scout_interval / 2
+        n = self.population
+        for i in range(n):
+            # Uninformed bees are constrained to start near U_START_CENTER
+            # The paper uses (CENTER - n/3, CENTER + n/3) for the range but
+            # for 2-dimensions I am using n/2 instead.
+            x = U_START_CENTER[0] - n/2 + self.random.random() * n
+            y = U_START_CENTER[1] - n/2 + self.random.random() * n
             pos = np.array((x, y))
-            # starting at 0 for some reason breaks the simulation
-            # the error messages are extremely confusing here because
-            # they involve stuff that shouldn't even use the velocity
+            # Uninformed bees start with no velocity
             velocity = np.zeros(2)
+            # They are still called boids because I didn't want to find and replace
+            # every instance of the word boid.
             boid = Boid(
                 i,
                 self,
@@ -98,35 +116,40 @@ class BoidFlockers(Model):
                 self.separation,
                 **self.factors
             )
+            # This stuff adds the agents to the simulation
             self.space.place_agent(boid, pos)
             self.schedule.add(boid)
-        for i in range(self.population, self.population + self.scout_population):
-            # Modify this to constrain where scout bees can start
-            # Scouts should start BEHIND regular bees
-            # Scouts start between x=(0,30) and y=(120, 180)
-            x = 30 * self.random.random()
-            y = 120 + self.random.random() * 60
+        for i in range(n, n + self.scout_population):
+            # Scouts always start BEHIND uninformed bees
+            # The paper isn't super clear on everything the scouts do
+            # but in their animation they appear to join the simulation 1 by 1
+            # to approximate this, we are lining the scouts up over an interval
+            # but then adding randomness so it's not perfectly lined up
+            # Scout height should be close to the center, but with variation.  This
+            # wasn't that clear in the paper either, but it should be less variation
+            # than for the entire swarm since the scouts actually only fly parallel to
+            # the correct position.  The reason they should lead okay doing this is
+            # because the correct position is the expected value of scout directions
+            scout_id = i - n
+            x = scout_intervals[scout_id]
+            y = U_START_CENTER[1] - n/4 + self.random.random() * n/2
             pos = np.array((x,y))
             # This will be max_speed * unit_vector_in_goal_direction
             # scouts are always going max speed or "circling back"
-            # the paper does not explain how circling back works and it's not
-            # clear from the pictures either so I guess we'll need to create our
-            # own rule here.
-            # For now goal can be the bottom right corned and the start point
-            # can be generally around the top right corner.  I don't think
-            # either should be exactly at the edge of the simulation.
-            # we should just keep speed at 1, for these simulations but I'm still including it
-            # velocity = self.vmax * self.speed * (self.goal - pos) / np.linalg.norm(self.goal - pos)
+            # the paper does not explain how circling back works but my best
+            # guess from looking at the simulation in slow motion is that scouts
+            # teleport to the back somehow.  There don't appear to be scouts moving
+            # around or away from the goal at any point.
             velocity = np.array([self.vmax, 0])
             scout = Scout(
                 i,
-                i - self.population, # keeps track of when to leave
+                scout_id, # keeps track of when to leave
                 self,
                 pos,
                 self.speed * self.vmax, # scouts always move at max speed
                 velocity,
                 self.vision,
-                self.min_scout_neighbors,
+                self.min_scout_neighbors, # when a scout has fewer neighbors the circle back
                 self.goal
             )
             self.space.place_agent(scout, pos)

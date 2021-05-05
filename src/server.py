@@ -4,6 +4,7 @@ from mesa.visualization.ModularVisualization import ModularServer
 
 from .boid import Boid
 from .scout import Scout
+from .goal import Goal
 from .model import BoidFlockers
 from .SimpleContinuousModule import SimpleCanvas
 
@@ -24,11 +25,18 @@ def boid_draw(agent):
             'Filled': 'true',
             'Color': 'Blue'
         }
+    elif isinstance(agent, Goal):
+        portrayal = {
+            'Shape': 'cirlcle',
+            'r': 6,
+            'Filled': 'true',
+            'Color': 'Red'
+        }
 
     return portrayal
 
 
-boid_canvas = SimpleCanvas(boid_draw, 500, 500)
+boid_canvas = SimpleCanvas(boid_draw, 400, 1000)
 # just use defaults
 # model_params = {
 #     "population": 100,

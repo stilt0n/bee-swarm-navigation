@@ -61,38 +61,49 @@ class Scout(Agent):
         self.goal = goal
         self.leave_counter = scout_id
     
+    # Scouts fly through on line parallel line from swarm center to goal.
+    # This requires finding the swarm center.  In the paper they remove disconnected
+    # Bees when doing this.  Here, we will just assume bees don't disconnect and remove
+    # trials where they do.  We can keep track of how many trials we remove to get an idea
+    # of how often disconnects take place.
     def get_center(self):
-        points = self.model_space._agent_points
+        points = self.model.space._agent_points
         return np.array([np.mean(points[:,0]), np.mean(points[:,1])])
-    
+
     def get_furthest_uninformed_x(self):
         uninformed = np.array([a.pos for a in self.model.schedule._agents.values() if a.unique_id < self.model.population])
         return np.max(uninformed[:,0])
 
     def reset(self):
-        # this is going to find the "back" of the swarm
-        # we only care about x, because the scouts always fly
-        # parallel to goal in y direction rather than straight there
-        # scout bee y position never changes
-        x_min = np.min(self.model.space._agent_points[:,0]) + self.model.random.random() * 2
-        
-        return np.array([x_min, self.pos[1]])
+        # we want to restart along the same line.  To do this:
+        # Find the minimum of all point x values
+        # new_pos[x] = min_x
+        # Find equation for line that reset point is travelling
+        # on using point slope formula (i.e find m and b)
+        # new_pos[y] = m * min_x + b
+        # Add some randomness to x
+        min_x = np.min(self.model.space._agent_points[:,0]) + self.random.random() * 2
+        m = (self.pos[1] - self.goal[1]) / (self.pos[0] - self.goal[0])
+        # (y = mx + b => y - mx = b)
+        b = self.pos[1] - m * self.pos[0]
+        new_y = m * min_x + b
+        return np.array([min_x, new_y])
 
     def towards_goal(self):
-        # I want to read through again but I think scouts just fly straight
-        # so we don't need to do any math at all then.
-        # return self.speed * (self.goal - self.pos) / np.linalg.norm(self.goal - self.pos) 
-        return self.speed * np.array([1,0])
+        # Flying parallel through center requires finding unit vector from center to goal
+        # Then modifying it to be the correct magnitude I don't think we need to know the position
+        center = self.get_center()
+        return self.speed * (self.goal - center) / np.linalg.norm(self.goal - center) 
+        # return self.speed * np.array([1,0])
     # I think this does need to be called from here
     def disappear(self):
         self.model.schedule.remove(self)
 
     def step(self):
         # distance from goal where scouts disappear
-        # this is just an arbitrary number till I get
-        # the model working
+        # distance is measured from swarm center
         close_to_goal = 75
-        distance_from_goal = np.linalg.norm(self.goal - self.pos)
+        distance_from_goal = np.linalg.norm(self.goal - self.get_center())
         # When close to goal gradually remove bees
         if distance_from_goal < close_to_goal:
             if self.leave_counter == 0:

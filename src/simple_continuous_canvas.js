@@ -66,7 +66,7 @@ var Simple_Continuous_Module = function(canvas_width, canvas_height) {
 
 	// Create the tag:
 	var canvas_tag = "<canvas width='" + canvas_width + "' height='" + canvas_height + "' ";
-	canvas_tag += "style='border:1px dotted'></canvas>";
+	canvas_tag += "style='border:1px dotted; margin: auto; width: 100%;'></canvas>";
 	// Append it to body:
 	var canvas = $(canvas_tag)[0];
 	$("#elements").append(canvas);

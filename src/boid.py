@@ -9,8 +9,8 @@ from mesa import Agent
 MAX_ACCEL = 0.3
 VMAX = 1.55
 ALPHA = 0.75
-WEIGHT_RANDOM = 0.3 # paper turned this off in experiments
-INERTIA = 0.66 # paper mentions this but I can't find anywhere where they
+WEIGHT_RANDOM = 0 # paper turned this off in experiments
+INERTIA = 0.75 # paper mentions this but I can't find anywhere where they
 # explicitly say what it was set to.
 
 class Boid(Agent):
