@@ -19,7 +19,7 @@ from .scout import Scout
 
 # This is bad practice and should be parameters but it'll have to do
 GOAL_X = 900 # in paper this will go out to 4000, but I'm doing some smaller runs first
-GOAL_Y = 150 # in paper I think this is 200 -- This will probably eventually be some fraction of n/2 (maybe n/4?)
+GOAL_Y = 300 # in paper I think this is 200 -- This will probably eventually be some fraction of n/2 (maybe n/4?)
 SCOUT_START_X = 100 # scout start area is from (0, SCOUT_START_X) scouts will be evenly spaced + noise
 U_START_CENTER = np.array([150,300]) # in paper this is [200,200,200] and uninformed bees are placed in a cube with side lengths n/3
 # n/3 is to prevent bees from starting starting disconnected.  I will do n/2 here instead.  I think n/3 has a lot to do with the

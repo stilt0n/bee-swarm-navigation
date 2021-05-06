@@ -87,7 +87,7 @@ class Scout(Agent):
         # new_pos[y] = m * min_x + b
         # Add some randomness to x
         min_x = np.min(self.model.space._agent_points[:,0]) + self.random.random() * 2
-        m = (self.pos[1] - self.goal[1]) / (self.pos[0] - self.goal[0])
+        m = (self.get_center()[1] - self.goal[1]) / (self.get_center()[0] - self.goal[0])
         # (y = mx + b => y - mx = b)
         b = self.pos[1] - m * self.pos[0]
         new_y = m * min_x + b
