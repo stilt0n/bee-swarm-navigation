@@ -73,13 +73,6 @@ class Boid(Agent):
                 # need to travel from A to get to B.
                 cohere += self.model.space.get_heading(self.pos, neighbor.pos)
             cohere /= len(neighbors)
-            # TODO:
-            # the paper divides by vision to keep the cohere vector in the
-            # interval [0,1].  I checked the source code for get_heading to
-            # make sure it doesn't do any type of normalization that would
-            # effectively already be doing this, but it appears it doesn't.
-            # The space is torroidal though, I don't know if this matters but
-            # I'm also not 100% sure it doesn't matter.  I should clarify this.
             cohere /= self.vision
         return cohere
 
@@ -116,7 +109,6 @@ class Boid(Agent):
         r = r / np.linalg.norm(r)
         return beta * r
 
-
     # This corresponds to "Align" in the paper
     def match_heading(self, neighbors):
         """
@@ -124,8 +116,10 @@ class Boid(Agent):
         """
         match_vector = np.zeros(2)
         if neighbors:
+            # scale influence by height.  Bees pay more attention to bees above them
             for neighbor in neighbors:
-                match_vector += neighbor.velocity
+                scaling_factor = 1.5 if neighbor.pos[1] > self.pos[1] else 0.5
+                match_vector += neighbor.velocity * scaling_factor
             match_vector /= len(neighbors)
             match_vector /= VMAX
         return match_vector

@@ -36,7 +36,7 @@ def boid_draw(agent):
     return portrayal
 
 
-boid_canvas = SimpleCanvas(boid_draw, 400, 1000)
+boid_canvas = SimpleCanvas(boid_draw, 600, 1000)
 # just use defaults
 # model_params = {
 #     "population": 100,

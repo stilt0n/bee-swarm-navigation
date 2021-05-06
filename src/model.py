@@ -20,8 +20,8 @@ from .scout import Scout
 # This is bad practice and should be parameters but it'll have to do
 GOAL_X = 900 # in paper this will go out to 4000, but I'm doing some smaller runs first
 GOAL_Y = 150 # in paper I think this is 200 -- This will probably eventually be some fraction of n/2 (maybe n/4?)
-SCOUT_START_X = 75 # scout start area is from (0, SCOUT_START_X) scouts will be evenly spaced + noise
-U_START_CENTER = np.array([150,150]) # in paper this is [200,200,200] and uninformed bees are placed in a cube with side lengths n/3
+SCOUT_START_X = 100 # scout start area is from (0, SCOUT_START_X) scouts will be evenly spaced + noise
+U_START_CENTER = np.array([150,300]) # in paper this is [200,200,200] and uninformed bees are placed in a cube with side lengths n/3
 # n/3 is to prevent bees from starting starting disconnected.  I will do n/2 here instead.  I think n/3 has a lot to do with the
 # dimension choice here.
 
@@ -42,18 +42,18 @@ class BoidFlockers(Model):
     def __init__(
         self,
         population=100,
-        scout_population=10,
+        scout_population=5,
         width=1000,
-        height=400,
+        height=600,
         speed=3,
-        vision=30,
+        vision=35, # increased vision to reflect ability to see scouts easier
         separation=15,
-        cohere=0.3,
-        separate=0.3,
+        cohere=0.4, # also increase coherence
+        separate=0.4, # increased separation
         match=0.3,
-        goal=np.array([900,150]),
+        goal=np.array([900,300]),
         vmax=1.55,
-        min_scout_neighbors=10
+        min_scout_neighbors=20
     ):
         """
         Create a new Flockers model.
@@ -132,7 +132,12 @@ class BoidFlockers(Model):
             # because the correct position is the expected value of scout directions
             scout_id = i - n
             x = scout_intervals[scout_id]
-            y = U_START_CENTER[1] - n/4 + self.random.random() * n/2
+            # always start above center
+            # mesa annoyingly has lower y values be higher up.
+            # Fixing this would involve reversing all the y values, which would be a
+            # lot of busy work.  Instead, scouts will be at the bottom of the swarm
+            # visually, which is still effectively checking the same hypothesis.
+            y = U_START_CENTER[1] + n/4 + self.random.random() * n/4
             pos = np.array((x,y))
             # This will be max_speed * unit_vector_in_goal_direction
             # scouts are always going max speed or "circling back"
@@ -146,7 +151,7 @@ class BoidFlockers(Model):
                 scout_id, # keeps track of when to leave
                 self,
                 pos,
-                self.speed * self.vmax, # scouts always move at max speed
+                self.speed * self.vmax * 1.5, # scouts always move at max speed, scouts have higher max speed
                 velocity,
                 self.vision,
                 self.min_scout_neighbors, # when a scout has fewer neighbors the circle back

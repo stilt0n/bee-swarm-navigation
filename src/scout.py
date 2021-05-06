@@ -66,9 +66,13 @@ class Scout(Agent):
     # Bees when doing this.  Here, we will just assume bees don't disconnect and remove
     # trials where they do.  We can keep track of how many trials we remove to get an idea
     # of how often disconnects take place.
-    def get_center(self):
-        points = self.model.space._agent_points
-        return np.array([np.mean(points[:,0]), np.mean(points[:,1])])
+    def get_center(self, include_scouts=True):
+        if include_scouts:
+            points = self.model.space._agent_points
+            return np.array([np.mean(points[:,0]), np.mean(points[:,1])])
+        else:
+            points = np.array([a.pos for a in self.model.schedule._agents if a.unique_id < self.model.population])
+            return np.array([np.mean(points[:,0]), np.mean(points[:,1])])
 
     def get_furthest_uninformed_x(self):
         uninformed = np.array([a.pos for a in self.model.schedule._agents.values() if a.unique_id < self.model.population])
@@ -98,6 +102,23 @@ class Scout(Agent):
     # I think this does need to be called from here
     def disappear(self):
         self.model.schedule.remove(self)
+    
+    def cohere(self, neighbors):
+        """
+        Return the vector toward the center of mass of the local neighbors.
+        """
+        cohere = np.zeros(2)
+        neighbors = [n for n in neighbors if n.unique_id < self.model.population]
+        if neighbors:
+            # do not cohere to other scouts
+            for neighbor in neighbors:
+                # Get heading finds the heading angle between two points
+                # i.e. given point A and B, find the direction you would
+                # need to travel from A to get to B.
+                cohere += self.model.space.get_heading(self.pos, neighbor.pos)
+            cohere /= len(neighbors)
+            cohere /= self.vision
+        return cohere
 
     def step(self):
         # distance from goal where scouts disappear
@@ -116,6 +137,7 @@ class Scout(Agent):
             self.model.space.move_agent(self, new_pos)
         # In normal instances, move towards goal
         else:
-            new_pos = self.pos + self.towards_goal()
+            neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
+            new_pos = self.pos + self.towards_goal() + self.cohere(neighbors) * 2
             self.model.space.move_agent(self, new_pos)
             
