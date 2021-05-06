@@ -28,6 +28,8 @@ class SimpleCanvas(VisualizationElement):
         agents.append(self.goal)
         for obj in agents:
             portrayal = self.portrayal_method(obj)
+            if obj == self.goal:
+                print(portrayal)
             x, y = obj.pos
             x = (self.canvas_width / self.canvas_height) * (x - model.space.x_min) / (model.space.x_max - model.space.x_min)
             y = (self.canvas_height / self.canvas_width) * (y - model.space.y_min) / (model.space.y_max - model.space.y_min)

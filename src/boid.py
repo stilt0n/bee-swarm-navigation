@@ -10,8 +10,7 @@ MAX_ACCEL = 0.3
 VMAX = 1.55
 ALPHA = 0.75
 WEIGHT_RANDOM = 0 # paper turned this off in experiments
-INERTIA = 0.75 # paper mentions this but I can't find anywhere where they
-# explicitly say what it was set to.
+INERTIA = 0.8 # the paper apparently sets this to 0.8
 
 class Boid(Agent):
     """

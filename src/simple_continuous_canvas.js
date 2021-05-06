@@ -63,10 +63,12 @@ var ContinuousVisualization = function(height, width, context) {
 var Simple_Continuous_Module = function(canvas_width, canvas_height) {
 	// Create the element
 	// ------------------
-
+	// adjust height based on container width
+	var full_width = document.getElementById('elements-topbar').offsetWidth;
+	var ratio = full_width / canvas_width;
 	// Create the tag:
 	var canvas_tag = "<canvas width='" + canvas_width + "' height='" + canvas_height + "' ";
-	canvas_tag += "style='border:1px dotted; margin: auto; width: 100%;'></canvas>";
+	canvas_tag += "style='border:1px dotted;'></canvas>";
 	// Append it to body:
 	var canvas = $(canvas_tag)[0];
 	$("#elements").append(canvas);
